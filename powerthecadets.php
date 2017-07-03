@@ -3,6 +3,34 @@
 require_once 'powerthecadets.civix.php';
 
 /**
+ * Implements hook_civicrm_buildForm().
+ *
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_buildForm
+ */
+function powerthecadets_civicrm_buildForm($formName, $form) {
+  if ($formName == 'CRM_Contribute_Form_Contribution_Main') {
+    $form_id = $form->_id;
+    $config = _powerthecadets_get_setting('config');
+    if (!empty($contribution_page_config = $config['contribution_pages'][$form_id])) {
+      $date_custom_field_id = $contribution_page_config['date_custom_field_id'];
+      $meal_price_field_id = $contribution_page_config['meal_price_field_id'];
+
+      $default_date = CRM_Utils_Array::value('custom_' . $date_custom_field_id, $form->_defaultValues);
+      $default_meal = CRM_Utils_Array::value('price_' . $meal_price_field_id, $form->_defaultValues);
+
+      $valid_meal_option_ids = array_keys($form->_priceSet['fields'][$meal_price_field_id]['options']);
+      if (!in_array($default_meal, $valid_meal_option_ids)) {
+        $default_meal = NULL;
+      }
+
+      if (empty($default_date) || empty($default_meal)) {
+        drupal_goto($contribution_page_config['calendar_url']);
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_civicrm_config().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_config
@@ -149,3 +177,30 @@ function powerthecadets_civicrm_navigationMenu(&$menu) {
   ));
   _powerthecadets_civix_navigationMenu($menu);
 } // */
+
+/**
+ * Get the value of the given config setting.
+ */
+function _powerthecadets_get_setting($name) {
+  // If this is the  first time, prime a $settings array with the default values,
+  // overridden with any values found by CRM_Core_BAO_Setting::getItem().
+  static $settings = array();
+  if (empty($settings)) {
+    $defaults = array(); // No defaults yet; add them here later if needed.
+
+    foreach ($defaults as $key => $value) {
+      $config_value = CRM_Core_BAO_Setting::getItem('org.yea.powerthecadets', $key);
+      if (!is_null($config_value)) {
+        $settings[$key] = $config_value;
+      }
+    }
+    $settings = array_replace_recursive($defaults, $settings);
+
+    // If the setting is still unset, set it from CRM_Core_BAO_Setting::getItem().
+    if (!array_key_exists($name, $settings)) {
+      $settings[$name] = CRM_Core_BAO_Setting::getItem('org.yea.powerthecadets', $name);
+    }
+  }
+
+  return $settings[$name];
+}
