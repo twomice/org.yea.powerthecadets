@@ -9,18 +9,18 @@
     <email>allen@JoineryHQ.com</email>
   </maintainer>
   <urls>
-    <url desc="Main Extension Page">http://FIXME</url>
-    <url desc="Documentation">http://FIXME</url>
-    <url desc="Support">http://FIXME</url>
+    <url desc="Main Extension Page">https://github.com/twomice/org.yea.powerthecadets</url>
+    <url desc="Documentation">https://github.com/twomice/org.yea.powerthecadets/blob/master/README.md</url>
+    <url desc="Support">https://github.com/twomice/org.yea.powerthecadets/issues</url>
     <url desc="Licensing">http://www.gnu.org/licenses/gpl-3.0.html</url>
   </urls>
   <releaseDate>2017-07-03</releaseDate>
-  <version>1.0</version>
-  <develStage>alpha</develStage>
+  <version>0.1</version>
+  <develStage>beta</develStage>
   <compatibility>
-    <ver>4.7</ver>
+    <ver>4.6</ver>
   </compatibility>
-  <comments>This is a new, undeveloped module</comments>
+  <comments>Developed for Youth Education in the Arts (http://yea.org) by Joinery (http://joineryhq.com)</comments>
   <civix>
     <namespace>CRM/Powerthecadets</namespace>
   </civix>
