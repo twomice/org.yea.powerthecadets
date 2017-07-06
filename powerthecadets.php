@@ -24,7 +24,7 @@ function powerthecadets_civicrm_buildForm($formName, $form) {
       }
 
       if (empty($default_date) || empty($default_meal)) {
-        drupal_goto($contribution_page_config['calendar_url']);
+        CRM_Utils_System::redirect($contribution_page_config['calendar_url']);
       }
     }
   }
