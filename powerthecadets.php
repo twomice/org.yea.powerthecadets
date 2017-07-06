@@ -8,7 +8,7 @@ require_once 'powerthecadets.civix.php';
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_buildForm
  */
 function powerthecadets_civicrm_buildForm($formName, $form) {
-  if ($formName == 'CRM_Contribute_Form_Contribution_Main') {
+  if ($formName == 'CRM_Contribute_Form_Contribution_Main' && $form->controller->_actionName[1] == 'display' && empty($form->_submitValues)) {
     $form_id = $form->_id;
     $config = _powerthecadets_get_setting('config');
     if (!empty($contribution_page_config = $config['contribution_pages'][$form_id])) {
