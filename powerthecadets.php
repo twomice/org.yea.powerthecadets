@@ -3,6 +3,128 @@
 require_once 'powerthecadets.civix.php';
 
 /**
+ * Implements hook_civicrm_postProcess().
+ *
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_postProcess
+ */
+function powerthecadets_civicrm_postProcess($formName, &$form) {
+  if ($formName == 'CRM_Contribute_Form_Contribution_Confirm') {
+    // Upon confirmation of a submitted contribution form, perform any necessary
+    // updates to the powerthecadets table.
+    _powerthecadets_update_calendar_table($form->_id, $form->_contributionID);
+  }
+}
+
+/**
+ * For a given contribution page and contribution, perform any necessary updates
+ * to the powerthecadets table.
+ *
+ * @param Int $contribution_page_id
+ * @param Int $contribution_id
+ */
+function _powerthecadets_update_calendar_table($contribution_page_id, $contribution_id) {
+  // Get the configuration settings for this extension.
+  $config = _powerthecadets_get_setting('config');
+  // Only if we have powerthecadets config for this contribution page.
+  if ($contribution_page_config = CRM_Utils_Array::value($contribution_page_id, $config['contribution_pages'])) {
+    // Only if a meal price field has been recorded in the configuration.
+    if ($meal_price_field_id = CRM_Utils_Array::value('meal_price_field_id', $contribution_page_config)) {
+      // Get the "meal selection" line item choice for this contribution.
+      $result = civicrm_api3('LineItem', 'get', array(
+        'sequential' => 1,
+        'contribution_id' => $contribution_id,
+        'entity_table' => "civicrm_contribution",
+        'entity_id' => $contribution_id,
+        'price_field_id' => $meal_price_field_id,
+      ));
+      // Only if any such line item is found.
+      if ($value = CRM_Utils_Array::value(0, $result['values'])) {
+        // Note the value of the selected price field option.
+        $option_id = CRM_Utils_Array::value('price_field_value_id', $value);
+        // Note the 'calendar_options' configuration.
+        $calendar_options = CRM_Utils_Array::value('calendar_options', $contribution_page_config, array());
+        // Only if the selected option is one of the configured calendar_options.
+        if ($option_label = CRM_Utils_Array::value($option_id, $calendar_options)) {
+          // This contribution is one that needs to update the table. Get the
+          // relevant custom field values and then update the table.
+
+          // Note configured custom field IDs for various fields.
+          $date_custom_field_id = CRM_Utils_Array::value('date_custom_field_id', $contribution_page_config);
+          $message_custom_field_id = CRM_Utils_Array::value('message_custom_field_id', $contribution_page_config);
+          $donor_custom_field_id = CRM_Utils_Array::value('donor_custom_field_id', $contribution_page_config);
+
+          // Build an array of custom field names based on those that are noted
+          // in the configuration.
+          $return_field_names = array(
+            'meal_date' => "custom_{$date_custom_field_id}",
+          );
+          if ($message_custom_field_id) {
+           $return_field_names['message'] = "custom_{$message_custom_field_id }";
+          }
+          if ($donor_custom_field_id) {
+           $return_field_names['donor'] = "custom_{$donor_custom_field_id }";
+          }
+
+          // Fetch the relevant custom field values via api.
+          $result = civicrm_api3('Contribution', 'get', array(
+            'sequential' => 1,
+            'return' => implode(',', $return_field_names),
+            'id' => $contribution_id,
+          ));
+          // Only if the contribution is found.
+          if ($value = CRM_Utils_Array::value(0, $result['values'])) {
+            // Build an array of SQL snippets that will be appended into the
+            // body of the SET clause in an UPDATE query. We'll use CiviCRM's
+            // '%N' standard for variable interpolation, so this involves creation
+            // of arrays $sql_sets and $sql_params.
+            $i = 1;
+            $sql_sets = array(
+              'available = 0',
+            );
+            $sql_params = array();
+            foreach ($return_field_names as $return_field_name_key => $return_field_name) {
+              if ($return_field_name_key == 'meal_date') {
+                // The meal_date field is not handled here. Skip it.
+                continue;
+              }
+              if (!array_key_exists($return_field_name, $value)) {
+                // This field_name is not available in the api result. Skip it.
+                continue;
+              }
+              $sql_sets[] = "$return_field_name_key = %{$i}";
+              $sql_params[$i] = array(
+                $value[$return_field_name],
+                'String',
+              );
+              $i++;
+            }
+            $sql_set = implode(',', $sql_sets);
+            // Define the query, including the SET clause body and other params.
+            $query = "
+              UPDATE powerthecadets
+              SET
+                $sql_set
+              WHERE
+                meal = %". $i++ ."
+                AND date(meal_date) = %". $i++ ."
+            ";
+            $sql_params[] = array(
+              $option_label,
+              'String',
+            );
+            $sql_params[] = array(
+              date('Y-m-d', strtotime($value[$return_field_names['meal_date']])),
+              'String',
+            );
+            CRM_Core_DAO::executeQuery($query, $sql_params);
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_civicrm_buildForm().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_buildForm
@@ -10,7 +132,7 @@ require_once 'powerthecadets.civix.php';
 function powerthecadets_civicrm_buildForm($formName, $form) {
   if ($formName == 'CRM_Contribute_Form_Contribution_Main') {
     // Add a hidden field to store the value of any nocalendar parameter; this
-    // hidden field value will persist in the form. We have to define the field 
+    // hidden field value will persist in the form. We have to define the field
     // on every buildForm run, but we only set the value when we want to (see
     // below).
     $form->addElement('hidden', 'nocalendar');
@@ -23,7 +145,7 @@ function powerthecadets_civicrm_buildForm($formName, $form) {
         // the very first opening of the form, and then that value will persist
         // for the life of the form.
         $form->setDefaults(array('nocalendar' => !empty($_GET['nocalendar'])));
-        // Only if we don't have the "nocalendar" query parameter, determine 
+        // Only if we don't have the "nocalendar" query parameter, determine
         // whether we need to redirect.
         if (empty($_GET['nocalendar'])) {
           $date_custom_field_id = CRM_Utils_Array::value('date_custom_field_id', $contribution_page_config);
@@ -32,9 +154,9 @@ function powerthecadets_civicrm_buildForm($formName, $form) {
           // Skip this whole thing if the correct config is not set.
           if(
             // custom date field ID is undefined.
-            empty($date_custom_field_id) 
+            empty($date_custom_field_id)
             // meal price field ID is undefined.
-            || empty($meal_price_field_id) 
+            || empty($meal_price_field_id)
             // defined meal price field ID doesn't match a price field in the form.
             || empty($form->_priceSet['fields'][$meal_price_field_id])
             // defined custom date field ID doesn't match a field in the form.
@@ -42,12 +164,12 @@ function powerthecadets_civicrm_buildForm($formName, $form) {
           ) {
             return;
           }
-          
+
           $default_date = CRM_Utils_Array::value('custom_' . $date_custom_field_id, $form->_defaultValues);
           $default_meal = CRM_Utils_Array::value('price_' . $meal_price_field_id, $form->_defaultValues);
           $valid_meal_option_ids = array_keys($form->_priceSet['fields'][$meal_price_field_id]['options']);
           if (!in_array($default_meal, $valid_meal_option_ids)) {
-            // If the preset meal value isn't one of the available options, 
+            // If the preset meal value isn't one of the available options,
             // it doesn't count, so unset it.
             $default_meal = NULL;
           }
@@ -67,11 +189,11 @@ function powerthecadets_civicrm_buildAmount($pageType, &$form, &$amount) {
   $config = _powerthecadets_get_setting('config');
   // Only if we have powerthecadets config for this contribution page, and the nocalendar param has been set for this form.
   if (!empty($contribution_page_config = $config['contribution_pages'][$form->_id]) && _powerthecadets_is_nocalendar($form)) {
-    // Since we have the nocalendar param, remove all "nocalendar_blocked" 
+    // Since we have the nocalendar param, remove all "calendar_options"
     // options from the meal price field.
-    $nocalendar_blocked_options = CRM_Utils_Array::value('nocalendar_blocked_options', $contribution_page_config, array());
+    $calendar_options = CRM_Utils_Array::value('calendar_options', $contribution_page_config, array());
     foreach ($amount[$contribution_page_config['meal_price_field_id']]['options'] as $option_id => $option) {
-      if (in_array($option_id, $nocalendar_blocked_options)) {
+      if (in_array($option_id, $calendar_options)) {
         unset($amount[$contribution_page_config['meal_price_field_id']]['options'][$option_id]);
       }
     }
