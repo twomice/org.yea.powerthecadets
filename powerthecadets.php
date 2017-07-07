@@ -8,26 +8,78 @@ require_once 'powerthecadets.civix.php';
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_buildForm
  */
 function powerthecadets_civicrm_buildForm($formName, $form) {
-  if ($formName == 'CRM_Contribute_Form_Contribution_Main' && $form->controller->_actionName[1] == 'display' && empty($form->_submitValues)) {
-    $form_id = $form->_id;
+  if ($formName == 'CRM_Contribute_Form_Contribution_Main') {
+    // Add a hidden field to store the value of any nocalendar parameter; this
+    // hidden field value will persist in the form. We have to define the field 
+    // on every buildForm run, but we only set the value when we want to (see
+    // below).
+    $form->addElement('hidden', 'nocalendar');
     $config = _powerthecadets_get_setting('config');
-    if (!empty($contribution_page_config = $config['contribution_pages'][$form_id])) {
-      $date_custom_field_id = $contribution_page_config['date_custom_field_id'];
-      $meal_price_field_id = $contribution_page_config['meal_price_field_id'];
+    // Only if we have powerthecadets config for this contribution page.
+    if (!empty($contribution_page_config = $config['contribution_pages'][$form->_id])) {
+      // Only if we're at the first form opening.
+      if (empty($form->_submitValues)) {
+        // Set the value of the "nocalendar" hidden field. We only do this on
+        // the very first opening of the form, and then that value will persist
+        // for the life of the form.
+        $form->setDefaults(array('nocalendar' => !empty($_GET['nocalendar'])));
+        // Only if we don't have the "nocalendar" query parameter, determine 
+        // whether we need to redirect.
+        if (empty($_GET['nocalendar'])) {
+          $date_custom_field_id = CRM_Utils_Array::value('date_custom_field_id', $contribution_page_config);
+          $meal_price_field_id = CRM_Utils_Array::value('meal_price_field_id', $contribution_page_config);
 
-      $default_date = CRM_Utils_Array::value('custom_' . $date_custom_field_id, $form->_defaultValues);
-      $default_meal = CRM_Utils_Array::value('price_' . $meal_price_field_id, $form->_defaultValues);
-
-      $valid_meal_option_ids = array_keys($form->_priceSet['fields'][$meal_price_field_id]['options']);
-      if (!in_array($default_meal, $valid_meal_option_ids)) {
-        $default_meal = NULL;
-      }
-
-      if (empty($default_date) || empty($default_meal)) {
-        CRM_Utils_System::redirect($contribution_page_config['calendar_url']);
+          // Skip this whole thing if the correct config is not set.
+          if(
+            // custom date field ID is undefined.
+            empty($date_custom_field_id) 
+            // meal price field ID is undefined.
+            || empty($meal_price_field_id) 
+            // defined meal price field ID doesn't match a price field in the form.
+            || empty($form->_priceSet['fields'][$meal_price_field_id])
+            // defined custom date field ID doesn't match a field in the form.
+            || empty($form->_fields['custom_'. $date_custom_field_id])
+          ) {
+            return;
+          }
+          
+          $default_date = CRM_Utils_Array::value('custom_' . $date_custom_field_id, $form->_defaultValues);
+          $default_meal = CRM_Utils_Array::value('price_' . $meal_price_field_id, $form->_defaultValues);
+          $valid_meal_option_ids = array_keys($form->_priceSet['fields'][$meal_price_field_id]['options']);
+          if (!in_array($default_meal, $valid_meal_option_ids)) {
+            // If the preset meal value isn't one of the available options, 
+            // it doesn't count, so unset it.
+            $default_meal = NULL;
+          }
+          if (empty($default_date) || empty($default_meal) && !empty($contribution_page_config['calendar_url'])) {
+            CRM_Utils_System::redirect($contribution_page_config['calendar_url']);
+          }
+        }
       }
     }
   }
+}
+
+/**
+ * Implements hook_civicrm_buildAmount().
+ */
+function powerthecadets_civicrm_buildAmount($pageType, &$form, &$amount) {
+  $config = _powerthecadets_get_setting('config');
+  // Only if we have powerthecadets config for this contribution page, and the nocalendar param has been set for this form.
+  if (!empty($contribution_page_config = $config['contribution_pages'][$form->_id]) && _powerthecadets_is_nocalendar($form)) {
+    // Since we have the nocalendar param, remove all "nocalendar_blocked" 
+    // options from the meal price field.
+    $nocalendar_blocked_options = CRM_Utils_Array::value('nocalendar_blocked_options', $contribution_page_config, array());
+    foreach ($amount[$contribution_page_config['meal_price_field_id']]['options'] as $option_id => $option) {
+      if (in_array($option_id, $nocalendar_blocked_options)) {
+        unset($amount[$contribution_page_config['meal_price_field_id']]['options'][$option_id]);
+      }
+    }
+  }
+}
+
+function _powerthecadets_is_nocalendar($form) {
+  return (!empty($_GET['nocalendar']) || !empty($form->_submitValues['nocalendar']));
 }
 
 /**
