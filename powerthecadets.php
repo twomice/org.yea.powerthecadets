@@ -2,6 +2,23 @@
 
 require_once 'powerthecadets.civix.php';
 
+function powerthecadets_civicrm_tabset($tabsetName, &$tabs, $context) {
+  if ($tabsetName == 'civicrm/admin/contribute') {
+    if (!empty($context['contribution_page_id'])) {
+      $contribID = $context['contribution_page_id'];
+      //add a new Volunteer tab along with url
+      $tabs["powerthecadets"] = array(
+        'title' => ts('Power the Cadets'),
+        // Contrary to documentation, 'link' doesn't seem to be used at all.
+        // 'link' => $url,
+        'valid' => 1,
+        'active' => 1,
+        'current' => false,
+      );
+    }
+  }
+}
+
 /**
  * Implements hook_civicrm_postProcess().
  *

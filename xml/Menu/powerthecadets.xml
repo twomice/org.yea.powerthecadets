@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<menu>
+  <item>
+    <path>civicrm/admin/contribute/powerthecadets</path>
+    <page_callback>CRM_Powerthecadets_Page_Contribute_Powerthecadets</page_callback>
+    <title>Power the Cadets</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+</menu>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>org.yea.powerthecadets README</title>
+<link rel="stylesheet" href="https://stackedit.io/res-min/themes/base.css" />
+</head>
+<body><div class="container"><h1 id="power-the-cadets">Power The Cadets</h1>
+
+<p>CiviCRM customizations to support <em>Power The Cadets</em>.</p>
+
+
+
+<h2 id="use-case">Use case</h2>
+
+<p>YEA maintains a <em>Power The Cadets</em> program to sponsor meals for cadets on their summer tour. This program relies on a custom-built calendar to display the meals that have not yet been sponsored, with links to a CiviCRM contribution page with which donors can submit a contribution to sponsor a given meal on a given date.</p>
+
+
+
+<h2 id="functionality">Functionality</h2>
+
+<p>This extension provides the following functionality, for any contribution page which is appropriately configured (see <em>Configuration</em>, below).</p>
+
+
+
+<h3 id="upon-opening-the-contribution-page">Upon opening the contribution page</h3>
+
+<p>Upon opening the contribution page, this extension checks for certain conditions and reacts accordingly, in order to decrease the chance that the contribution page can be used to sponsor a meal that’s already sponsored. </p>
+
+<ul>
+<li>If the special query parameter <code>nocalendar=1</code> is found in the URL, disable meal-related options that should be handled through the calendar. For example, if <em>Breakfast</em>, <em>Lunch</em>, and <em>Full Day</em> options are configured as calendar options, those options will be hidden, and only the other options (e.g., Cereal, Peanut Butter) will remain available.</li>
+<li>If the query parameters for meal and date are found in the URL, display the form as usual.</li>
+<li>If neither of the above are true, redirect to the calendar at the appropriate URL.</li>
+</ul>
+
+<h3 id="upon-submitting-the-contribution">Upon submitting the contribution</h3>
+
+<p>Upon submitting the contribution, this extension automatically makes appropriate updates to the calendar data, in order to immeidately note which meals still remain available for sponsorship.</p>
+
+<ul>
+<li>If the selected meal is not one of the calendar options, do nothing. For example, <em>Breakfast</em>, <em>Lunch</em>, and <em>Full Day</em> options may be configured as calendar options, and the contribution form may additionally provide additional options (e.g., Cereal, Peanut Butter); in this example, if the contrubution page is submitted for the <em>Cereal</em> option, no automatic update is performed.</li>
+<li>Otherwise, make the following updates: <br>
+<ul><li>Locate the record in the table ‘powerthecadets’ which corresponds to the selected meal and date.</li>
+<li>Update field ‘available’ to 0 (not available)</li>
+<li>Update field ‘donor’ to the value submitted in the <em>Name on whiteboard</em> profile field (if such field is configured)</li>
+<li>Update field ‘message’ to the value submitted in the <em>Message to members</em> profile field (if such field is configured)</li></ul></li>
+</ul>
+
+
+
+<h2 id="configuration">Configuration</h2>
+
+<p>Configuration is achieved by adding lines like these to civicrm.settings.php:</p>
+
+
+
+<pre class="prettyprint"><code class="language-php hljs "><span class="hljs-keyword">global</span> <span class="hljs-variable">$civicrm_setting</span>;
+<span class="hljs-variable">$civicrm_setting</span>[<span class="hljs-string">'org.yea.powerthecadets'</span>][<span class="hljs-string">'config'</span>] = <span class="hljs-keyword">array</span>(
+  <span class="hljs-string">'contribution_pages'</span> =&gt; <span class="hljs-keyword">array</span>(
+    N =&gt; <span class="hljs-keyword">array</span>(
+      <span class="hljs-string">'calendar_url'</span> =&gt; <span class="hljs-string">CALENDAR_URL'</span>,
+      <span class="hljs-string">'meal_price_field_id'</span> =&gt; <span class="hljs-string">MEAL_PRICE_FIELD_ID</span>,
+      <span class="hljs-string">'date_custom_field_id'</span> =&gt; <span class="hljs-string">DATE_CUSTOM_FIELD_ID</span>,
+      <span class="hljs-string">'message_custom_field_id'</span> =&gt; <span class="hljs-string">MESSAGE_CUSTOM_FIELD_ID</span>,
+      <span class="hljs-string">'donor_custom_field_id'</span> =&gt; <span class="hljs-string">DONOR_CUSTOM_FIELD_ID</span>,
+      <span class="hljs-string">'calendar_options'</span> =&gt; OPTIONS_ARRAY,
+    ),
+  ),
+);
+</code></pre>
+
+<ul>
+<li><code>N</code>: <em>Integer.</em> The CiviCRM system ID of the contribution page.</li>
+<li><code>CALENDAR_URL</code>: <em>String.</em> The URL of the calendar. Any eedirection to the calendar will send the user to this URL.</li>
+<li><code>MEAL_PRICE_FIELD_ID</code>: <em>Integer.</em> The CiviCRM system ID of the price field with which the donor will select the meal (Lunch, Dinner, etc.)</li>
+<li><code>DATE_CUSTOM_FIELD_ID</code>: <em>Integer.</em> The CiviCRM system ID of the custom data field with which the donor will indicate the date of the meal.</li>
+<li><code>MESSAGE_CUSTOM_FIELD_ID</code>: <em>Integer.</em> The CiviCRM system ID of the custom data field with which the donor will provide their desired custom message to the cadets.</li>
+<li><code>DONOR_CUSTOM_FIELD_ID</code>: <em>Integer.</em> The CiviCRM system ID of the custom data field with which the donor will provide a name to be displayed in any public thanks for the meal sponsorship.</li>
+<li><code>OPTIONS_ARRAY</code>: <em>Array</em>. An associateive array of meal options which should be handled through the calendar only. Array keys are <em>Integer</em> CiviCRM system IDs of the relevant price options in the MEAL_PRICE_FIELD_ID price field. Array values are <em>String</em> labels which are exactly equal to the corresponding meal as it appears in the calendar. See example below</li>
+</ul>
+
+
+
+<h3 id="example-configuration">Example configuration</h3>
+
+<p>Note the comments in the PHP code below, for explanation of the given configuration options.</p>
+
+
+
+<pre class="prettyprint"><code class="language-php hljs "><span class="hljs-keyword">global</span> <span class="hljs-variable">$civicrm_setting</span>;
+<span class="hljs-variable">$civicrm_setting</span>[<span class="hljs-string">'org.yea.powerthecadets'</span>][<span class="hljs-string">'config'</span>] = <span class="hljs-keyword">array</span>(
+  <span class="hljs-string">'contribution_pages'</span> =&gt; <span class="hljs-keyword">array</span>(
+    <span class="hljs-string">'5'</span> =&gt; <span class="hljs-keyword">array</span>( <span class="hljs-comment">// The contribution page with id=5 is the one </span>
+                  <span class="hljs-comment">// where donations are accepted for this campaign.</span>
+
+      <span class="hljs-comment">// Any valid URL can be used here. Obviously, check to ensure </span>
+      <span class="hljs-comment">// that this URL presents a calendar where people can sponsor</span>
+      <span class="hljs-comment">// meals for the campaign.</span>
+      <span class="hljs-string">'calendar_url'</span> =&gt; <span class="hljs-string">'http://example.com/ptc-calendar'</span>,
+
+
+      <span class="hljs-comment">// FINDING SYSTEM IDs</span>
+      <span class="hljs-comment">// --- Price Fields ---</span>
+      <span class="hljs-comment">// The system ID of a price field can be determined within </span>
+      <span class="hljs-comment">// the Price Set configuration by observing the URL of the </span>
+      <span class="hljs-comment">// "Edit Price Field" link, specifically the `fid` query parameter. </span>
+      <span class="hljs-comment">// For example, if that URL is </span>
+      <span class="hljs-comment">// http://example.com/administrator/?option=com_civicrm&amp;task=civicrm/admin/price/field&amp;action=update&amp;reset=1&amp;sid=201&amp;fid=36</span>
+      <span class="hljs-comment">// then the price field ID is 36.</span>
+      <span class="hljs-comment">// </span>
+      <span class="hljs-comment">// --- Custom Data Fields ---</span>
+      <span class="hljs-comment">// The system ID of a custom data field can be determined within </span>
+      <span class="hljs-comment">// the Custom Field Group configuration by observing the URL of the </span>
+      <span class="hljs-comment">// "Edit Field" link, specifically the `id` query parameter. </span>
+      <span class="hljs-comment">// For example, if that URL is </span>
+      <span class="hljs-comment">// http://example.com/administrator/?option=com_civicrm&amp;task=civicrm/admin/custom/group/field/update&amp;action=update&amp;reset=1&amp;gid=14&amp;id=20      </span>
+      <span class="hljs-comment">// then the custom field ID is 20.</span>
+      <span class="hljs-comment">// </span>
+      <span class="hljs-comment">// --- Price Optinos ---</span>
+      <span class="hljs-comment">// The system ID of a price option can be determined within </span>
+      <span class="hljs-comment">// the Edit Price Options configuration for a given price field,</span>
+      <span class="hljs-comment">// by observing the URL of the relevant "Edit Option" link, </span>
+      <span class="hljs-comment">// specifically the `oid` query parameter. For example, if that URL is </span>
+      <span class="hljs-comment">// http://example.com/administrator/?option=com_civicrm&amp;task=civicrm/admin/price/field/option&amp;reset=1&amp;action=update&amp;oid=123&amp;fid=355&amp;sid=201</span>
+      <span class="hljs-comment">// then the price option ID is 123.</span>
+
+      <span class="hljs-comment">// The contribution page for this campaign uses a priceset</span>
+      <span class="hljs-comment">// which includes a field labled "The meal to sponsor", with</span>
+      <span class="hljs-comment">// options like Breakfast, Lunch, etc. That price field has</span>
+      <span class="hljs-comment">// the system ID of 36.</span>
+      <span class="hljs-string">'meal_price_field_id'</span> =&gt; <span class="hljs-string">'36'</span>,
+
+      <span class="hljs-comment">// The contribution page for this campaign uses a profile which</span>
+      <span class="hljs-comment">// includes a custom data field labeled "The date of the meal".</span>
+      <span class="hljs-comment">// This custom field has a system ID of 20.</span>
+      <span class="hljs-comment">// then the field ID is 20.</span>
+      <span class="hljs-string">'date_custom_field_id'</span> =&gt; <span class="hljs-string">'20'</span>,
+
+      <span class="hljs-comment">// The contribution page for this campaign uses a profile which</span>
+      <span class="hljs-comment">// includes a custom data field labeled "Message to the cadets".</span>
+      <span class="hljs-comment">// This custom field has a system ID of 20.</span>
+      <span class="hljs-string">'message_custom_field_id'</span> =&gt; <span class="hljs-string">'21'</span>,
+
+      <span class="hljs-comment">// The contribution page for this campaign uses a profile which</span>
+      <span class="hljs-comment">// includes a custom data field labeled "Donor name on whiteboard".</span>
+      <span class="hljs-comment">// This custom field has a system ID of 22.</span>
+      <span class="hljs-string">'donor_custom_field_id'</span> =&gt; <span class="hljs-string">'22'</span>,      
+
+
+      <span class="hljs-comment">// The contribution page for this campaign uses a priceset</span>
+      <span class="hljs-comment">// which includes a field labled "The meal to sponsor", with</span>
+      <span class="hljs-comment">// options including labeled "Cereal", "Peanut Butter", "Great </span>
+      <span class="hljs-comment">// Breakfast", "Super Lunch", and "Yummy Dinner". Only the options</span>
+      <span class="hljs-comment">// "Great Breakfast" (id=123), "Super Lunch" (id=124), and "Yummy</span>
+      <span class="hljs-comment">// Dinner" (id=125) are managed through the calendar. Also note that</span>
+      <span class="hljs-comment">// the calendar uses the simple labels "Breakfast", "Lunch", and </span>
+      <span class="hljs-comment">// "Dinner", so we specify those calendar labels here, for each</span>
+      <span class="hljs-comment">// corresponding price option ID.</span>
+    <span class="hljs-string">'calendar_options'</span> =&gt; <span class="hljs-keyword">array</span>(
+        <span class="hljs-number">123</span> =&gt; <span class="hljs-string">'Breakfast'</span>,
+        <span class="hljs-number">124</span> =&gt; <span class="hljs-string">'Lunch'</span>,
+        <span class="hljs-number">125</span> =&gt; <span class="hljs-string">'Dinner'</span>,
+      ),
+    ),
+  ),
+);</code></pre></div></body>
+</html>
