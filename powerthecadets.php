@@ -13,7 +13,7 @@ function powerthecadets_civicrm_tabset($tabsetName, &$tabs, $context) {
         // 'link' => $url,
         'valid' => 1,
         'active' => 1,
-        'current' => false,
+        'current' => FALSE,
       );
     }
   }
@@ -76,10 +76,10 @@ function _powerthecadets_update_calendar_table($contribution_page_id, $contribut
             'meal_date' => "custom_{$date_custom_field_id}",
           );
           if ($message_custom_field_id) {
-           $return_field_names['message'] = "custom_{$message_custom_field_id }";
+            $return_field_names['message'] = "custom_{$message_custom_field_id }";
           }
           if ($donor_custom_field_id) {
-           $return_field_names['donor'] = "custom_{$donor_custom_field_id }";
+            $return_field_names['donor'] = "custom_{$donor_custom_field_id }";
           }
 
           // Fetch the relevant custom field values via api.
@@ -122,8 +122,8 @@ function _powerthecadets_update_calendar_table($contribution_page_id, $contribut
               SET
                 $sql_set
               WHERE
-                meal = %". $i++ ."
-                AND date(meal_date) = %". $i++ ."
+                meal = %" . $i++ . "
+                AND date(meal_date) = %" . $i++ . "
             ";
             $sql_params[] = array(
               $option_label,
@@ -169,7 +169,7 @@ function powerthecadets_civicrm_buildForm($formName, $form) {
           $meal_price_field_id = CRM_Utils_Array::value('meal_price_field_id', $contribution_page_config);
 
           // Skip this whole thing if the correct config is not set.
-          if(
+          if (
             // custom date field ID is undefined.
             empty($date_custom_field_id)
             // meal price field ID is undefined.
@@ -177,7 +177,7 @@ function powerthecadets_civicrm_buildForm($formName, $form) {
             // defined meal price field ID doesn't match a price field in the form.
             || empty($form->_priceSet['fields'][$meal_price_field_id])
             // defined custom date field ID doesn't match a field in the form.
-            || empty($form->_fields['custom_'. $date_custom_field_id])
+            || empty($form->_fields['custom_' . $date_custom_field_id])
           ) {
             return;
           }
@@ -348,26 +348,27 @@ function powerthecadets_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
  *
-function powerthecadets_civicrm_preProcess($formName, &$form) {
-
-} // */
+ * function powerthecadets_civicrm_preProcess($formName, &$form) {
+ * } //
+ */
 
 /**
  * Implements hook_civicrm_navigationMenu().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_navigationMenu
  *
-function powerthecadets_civicrm_navigationMenu(&$menu) {
-  _powerthecadets_civix_insert_navigation_menu($menu, NULL, array(
-    'label' => E::ts('The Page', array('domain' => 'org.yea.powerthecadets')),
-    'name' => 'the_page',
-    'url' => 'civicrm/the-page',
-    'permission' => 'access CiviReport,access CiviContribute',
-    'operator' => 'OR',
-    'separator' => 0,
-  ));
-  _powerthecadets_civix_navigationMenu($menu);
-} // */
+ * function powerthecadets_civicrm_navigationMenu(&$menu) {
+ * _powerthecadets_civix_insert_navigation_menu($menu, NULL, array(
+ * 'label' => E::ts('The Page', array('domain' => 'org.yea.powerthecadets')),
+ * 'name' => 'the_page',
+ * 'url' => 'civicrm/the-page',
+ * 'permission' => 'access CiviReport,access CiviContribute',
+ * 'operator' => 'OR',
+ * 'separator' => 0,
+ * ));
+ * _powerthecadets_civix_navigationMenu($menu);
+ * } //
+ */
 
 /**
  * Get the value of the given config setting.
@@ -377,7 +378,8 @@ function _powerthecadets_get_setting($name) {
   // overridden with any values found by CRM_Core_BAO_Setting::getItem().
   static $settings = array();
   if (empty($settings)) {
-    $defaults = array(); // No defaults yet; add them here later if needed.
+    // No defaults yet; add them here later if needed.
+    $defaults = array();
 
     foreach ($defaults as $key => $value) {
       $config_value = CRM_Core_BAO_Setting::getItem('org.yea.powerthecadets', $key);
