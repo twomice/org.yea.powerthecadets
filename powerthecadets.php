@@ -8,7 +8,7 @@ function powerthecadets_civicrm_tabset($tabsetName, &$tabs, $context) {
       $contribID = $context['contribution_page_id'];
       //add a new Volunteer tab along with url
       $tabs["powerthecadets"] = array(
-        'title' => ts('Power the Cadets'),
+        'title' => E::ts('Power the Cadets'),
         // Contrary to documentation, 'link' doesn't seem to be used at all.
         // 'link' => $url,
         'valid' => 1,
@@ -359,7 +359,7 @@ function powerthecadets_civicrm_preProcess($formName, &$form) {
  *
 function powerthecadets_civicrm_navigationMenu(&$menu) {
   _powerthecadets_civix_insert_navigation_menu($menu, NULL, array(
-    'label' => ts('The Page', array('domain' => 'org.yea.powerthecadets')),
+    'label' => E::ts('The Page', array('domain' => 'org.yea.powerthecadets')),
     'name' => 'the_page',
     'url' => 'civicrm/the-page',
     'permission' => 'access CiviReport,access CiviContribute',

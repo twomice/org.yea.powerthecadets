@@ -4,7 +4,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
 
   public function run() {
     // Example: Set the page-title dynamically; alternatively, declare a static title in xml/Menu/*.xml
-//    CRM_Utils_System::setTitle(ts('Contribute_Powerthecadets'));
+//    CRM_Utils_System::setTitle(E::ts('Contribute_Powerthecadets'));
     $config = _powerthecadets_get_setting('config');
     // Only if we have powerthecadets config for this contribution page.
     $contribution_page_id = CRM_Utils_Array::value('id', $_REQUEST);
@@ -14,7 +14,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
         $this->assign('calendar_url', $calendar_url);
       }
       else {
-        $this->assign('calendar_url', ts('Error: Not defined. Redirection will not be performed.'));
+        $this->assign('calendar_url', E::ts('Error: Not defined. Redirection will not be performed.'));
         $error_settings['calendar_url'] = TRUE;
       }
       
@@ -27,7 +27,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
           ),
         ));
         if (empty($result['values'][0])) {
-          $meal_price_field = ts(
+          $meal_price_field = E::ts(
             'Error: Set to value %1, which is not a valid price field. Neither redirection nor automatic update will be performed.',
             array(
               1 => $meal_price_field_id,
@@ -40,7 +40,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
         }
       }
       else {
-        $meal_price_field = ts('Error: Not defined. Neither redirection nor automatic update will be performed.');
+        $meal_price_field = E::ts('Error: Not defined. Neither redirection nor automatic update will be performed.');
         $error_settings['meal_price_field'] = TRUE;
       }
       $this->assign('meal_price_field', $meal_price_field);
@@ -58,7 +58,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
         }
       }
       else {
-        $calendar_option_labels = ts('Error: Not defined. All options will be hidden with the <em>nocalendar</em> parameter; automatic update will not be performed.');
+        $calendar_option_labels = E::ts('Error: Not defined. All options will be hidden with the <em>nocalendar</em> parameter; automatic update will not be performed.');
         $error_settings['calendar_option_labels'] = TRUE;
       }
       $this->assign('calendar_option_labels', $calendar_option_labels);
@@ -74,7 +74,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
           ),
         ));
         if (empty($result['values'][0])) {
-          $meal_date_custom_field = ts(
+          $meal_date_custom_field = E::ts(
             'Error: Set to value %1, which is not a valid custom field. Neither redirection nor automatic update will be performed.',
             array(
               1 => $date_custom_field_id,
@@ -87,7 +87,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
         }
       }
       else {
-        $meal_date_custom_field = ts('Error: Not defined. Neither redirection nor automatic update will be performed.');
+        $meal_date_custom_field = E::ts('Error: Not defined. Neither redirection nor automatic update will be performed.');
         $error_settings['meal_date_custom_field'] = TRUE;
       }
       $this->assign('meal_date_custom_field', $meal_date_custom_field);
@@ -102,7 +102,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
           ),
         ));
         if (empty($result['values'][0])) {
-          $message_custom_field = ts(
+          $message_custom_field = E::ts(
             'Error: Set to value %1, which is not a valid custom field. Message will not be saved in automatic update.',
             array(
               1 => $message_custom_field_id,
@@ -115,7 +115,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
         }
       }
       else {
-        $message_custom_field = ts('Error: Not defined. Message will not be saved in automatic update.');
+        $message_custom_field = E::ts('Error: Not defined. Message will not be saved in automatic update.');
         $error_settings['message_custom_field'] = TRUE;
       }
       $this->assign('message_custom_field', $message_custom_field);
@@ -130,7 +130,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
           ),
         ));
         if (empty($result['values'][0])) {
-          $donor_custom_field = ts(
+          $donor_custom_field = E::ts(
             'Error: Set to value %1, which is not a valid custom field. Donor will not be saved in automatic update.',
             array(
               1 => $donor_custom_field_id,
@@ -143,7 +143,7 @@ class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
         }
       }
       else {
-        $donor_custom_field = ts('Error: Not defined. Donor will not be saved in automatic update.');
+        $donor_custom_field = E::ts('Error: Not defined. Donor will not be saved in automatic update.');
         $error_settings['donor_custom_field'] = TRUE;
       }
       $this->assign('donor_custom_field', $donor_custom_field);
