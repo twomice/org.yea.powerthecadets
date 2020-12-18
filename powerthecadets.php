@@ -2,6 +2,8 @@
 
 require_once 'powerthecadets.civix.php';
 
+use CRM_Powerthecadets_ExtensionUtil as E;
+
 function powerthecadets_civicrm_tabset($tabsetName, &$tabs, $context) {
   if ($tabsetName == 'civicrm/admin/contribute') {
     if (!empty($context['contribution_page_id'])) {

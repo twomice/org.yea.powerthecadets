@@ -1,5 +1,7 @@
 <?php
 
+use CRM_Powerthecadets_ExtensionUtil as E;
+
 class CRM_Powerthecadets_Page_Contribute_Powerthecadets extends CRM_Core_Page {
 
   public function run() {
